@@ -1,27 +1,45 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { FaBan, FaCheck } from 'react-icons/fa'
+import { useHighlight } from '../../context/HighlightContext'
 import { useNoteForm } from '../../context/NoteFormContext'
 import { useNoteList } from '../../context/NoteListContext'
 import './styles.css'
 
 export default function NoteForm() {
 
-
+  const { highlight, setHighLight } = useHighlight()
   const { noteList, setNoteList } = useNoteList()
-  const { title, setTitle, description, setDescription, visibleForm, setVisibleForm} = useNoteForm()
+  const { title, setTitle, description, setDescription, setVisibleForm } = useNoteForm()
+
+  useEffect(() => {
+    saveLocalNotes()
+  }, [noteList])
 
   function submitHandler(e) {
     e.preventDefault();
 
-    setNoteList([
-      ...noteList,
-      {
-        id: String(Math.floor(Math.random() * 1000)),
-        title,
-        description,
-      }
-    ])
+    if (highlight) {
+      noteList.map((note) => {
+        if (note.id === highlight) {
+          note.title = title;
+          note.description = description;
+        }
+      })
+      setNoteList([...noteList])
+    } else {
+      setNoteList([
+        ...noteList,
+        {
+          id: String(Math.floor(Math.random() * 1000)),
+          title,
+          description,
+        }
+      ])
+    }
+  }
 
+  function saveLocalNotes() {
+    localStorage.setItem("notes", JSON.stringify(noteList))
   }
 
   return (
@@ -39,7 +57,10 @@ export default function NoteForm() {
       </div>
 
       <div className='buttons'>
-        <button onClick={() => setVisibleForm(false)} className="cancel">
+        <button onClick={() => {
+          setVisibleForm(false)
+          setHighLight(false)
+        }} className="cancel">
           <FaBan className='icon' />
         </button>
         <button type="submit" className="confirm">
